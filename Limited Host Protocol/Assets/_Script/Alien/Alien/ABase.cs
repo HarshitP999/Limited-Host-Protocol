@@ -1,16 +1,11 @@
-using UnityEngine;
 
-public class ABase : MonoBehaviour
+public abstract class ABase 
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        
-    }
+    public abstract void EnterState(PlayerController playerC); 
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+
+    public abstract void UpdateState(PlayerController playerC);
+    public abstract void ExitState(PlayerController playerC); 
+
+    
 }
