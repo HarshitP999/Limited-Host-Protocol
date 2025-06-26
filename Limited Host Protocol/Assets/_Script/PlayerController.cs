@@ -1,62 +1,76 @@
 using System;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
-public class PlayerController : MonoBehaviour , IController
+public class PlayerController : MonoBehaviour, IController
 {
-    
-   // public Rigidbody2D.SlideMovement SlideMovement = new Rigidbody2D.SlideMovement();
+
+    // public Rigidbody2D.SlideMovement SlideMovement = new Rigidbody2D.SlideMovement();
 
 
     private Rigidbody2D rb2d;
     private Animator anim;
     public Vector2 moveInput;
 
+
+
+
     public StateManager fsm;
     public float baseSpeed = 5f;
 
     private InputSystem_Actions inputActions;
 
-    // Called when the object is created
+    bool isPossessed = false;
+
+
+
+
     private void Awake()
     {
         rb2d = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
 
+
         fsm = new StateManager();
-        fsm.ChangerState(new IdlePlayer(this)); // Assuming this is a state in your FSM
+        fsm.ChangerState(new IdlePlayer(this)); 
+
+
 
         inputActions = new InputSystem_Actions();
     }
+
+
+
+
     private void OnEnable()
     {
         inputActions.Enable();
+
+
         inputActions.Player.Move.performed += OnMove;
-        
-        inputActions.Player.Move.canceled += OnMove;
-        inputActions.Player.Posses.performed += OnPosses;
+        inputActions.Player.Move.canceled += ctx => moveInput = Vector2.zero;
+        inputActions.Player.Posses.performed += OnPoss;
+        inputActions.Player.Unposses.performed += Unposs;
+
     }
     private void OnDisable()
     {
         inputActions.Player.Move.performed -= OnMove;
-        inputActions.Player.Move.canceled -= OnMove;
-        inputActions.Player.Posses.performed -= OnPosses;
+        inputActions.Player.Move.canceled -= ctx => moveInput = Vector2.zero;
+        inputActions.Player.Posses.performed -= OnPoss;
+        inputActions.Player.Unposses.performed -= Unposs;
+
 
         inputActions.Disable();
 
     }
-
-
-    void Update()
-    {
-        fsm.UpdateState();
-        UpdateAnimation();
-    }
     private void FixedUpdate()
-    {
-        MovePlayer();
 
+    {
+        UpdateAnimation();
+        fsm.UpdateState();
+        MovePlayer();
+        UpdateController();
     }
     void UpdateAnimation()
     {
@@ -65,40 +79,68 @@ public class PlayerController : MonoBehaviour , IController
 
     void Posses() { }
 
-    void Unposses() { }
-    void UpdateController() {
+    void Unpossess() { }
+    void UpdateController()
+    {
 
-        fsm.UpdateState(); 
+        fsm.UpdateState();
     }
 
     void MovePlayer()
     {
-       
+
         Vector2 velocity = new Vector2(moveInput.x * baseSpeed, 0);
-     //   rb2d.AddForce(velocity,ForceMode2D.Force);
+        //   rb2d.AddForce(velocity,ForceMode2D.Force);
         rb2d.MovePosition(rb2d.position + velocity * Time.fixedDeltaTime);
 
 
     }
     void OnMove(InputAction.CallbackContext context)
     {
-      //  if (context.performed)
+        //  if (context.performed)
         {
             Debug.Log("Button Pressed");
 
             moveInput = context.ReadValue<Vector2>();
 
         }
-        
+
     }
-     
-    void OnPosses(InputAction.CallbackContext context)
+
+    void OnPoss(InputAction.CallbackContext context)
     {
         if (context.performed)
         {
-            Debug.Log("OnPosses is Pressed");
-            Posses();
+            if (!isPossessed)
+            {
+                Debug.Log("OnPosses is Pressed");
+                Posses();
+                isPossessed = true;
+
+            }
+            else { return; }
         }
 
+    }
+    void Unposs(InputAction.CallbackContext context)
+    {
+        {
+           
+            if (context.performed)
+            {
+                if (isPossessed)
+                {
+                    Debug.Log("UnPosses is Pressed");
+                    Unpossess();
+                    isPossessed = false;
+
+                }
+                else
+                {
+                    return;
+                }
+              
+            }
+        }
     }
 }
